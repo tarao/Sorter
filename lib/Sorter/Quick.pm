@@ -10,7 +10,7 @@ sub sort {
 
 sub _sort {
     my ($self, $first, $last) = @_;
-    while (1 < $last - $first) {
+    while (1 < $last - $first) { # semi-recursive implementation of quick sort
         my $cut = $self->_unguarded_partition($first, $last);
         if ($cut - $first < $last - $cut) {
             # right hand side partition is longer:
@@ -36,9 +36,8 @@ sub _unguarded_partition {
         --$last while ($self->{pred}->($pivot, $self->{values}->[$last]));
         return $first unless $first < $last;
 
-        my $tmp = $self->{values}->[$first];
-        $self->{values}->[$first] = $self->{values}->[$last];
-        $self->{values}->[$last] = $tmp;
+        ($self->{values}->[$first], $self->{values}->[$last])
+            = ($self->{values}->[$last], $self->{values}->[$first]);
         ++$first;
     }
 }
