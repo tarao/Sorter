@@ -26,7 +26,7 @@ sub sort {
 
     $algo =~ s/^(.)/\U$1/;
     $algo = join('::', __PACKAGE__, $algo);
-    $algo->require or die("Can't load algorithm");
+    $algo->require or die("Can't load " . $algo);
 
     $algo->sort($self, $pred);
 }
