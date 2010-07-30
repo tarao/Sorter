@@ -1,11 +1,7 @@
 package Sorter::Quick;
 use strict;
 use warnings;
-
-sub new {
-    my ($class, $array, $pred) = @_;
-    return bless { values => $array, pred => $pred }, $class;
-}
+use base qw/Sorter::Base/;
 
 sub sort {
     my $self = shift;
