@@ -28,7 +28,8 @@ sub sort {
     $algo = join('::', __PACKAGE__, $algo);
     $algo->require or die("Can't load " . $algo);
 
-    $algo->sort($self, $pred);
+    $algo = $algo->new($self, $pred);
+    $algo->sort;
 }
 
 1;
