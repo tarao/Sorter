@@ -2,43 +2,44 @@ package Sorter::Quick;
 use strict;
 use warnings;
 use base qw/Sorter::Base/;
+use Range;
 
 sub sort {
     my $self = shift;
-    $self->_sort(0, scalar(@{$self->{values}}));
+    $self->_sort(Range->new($self->{values}));
 }
 
 sub _sort {
-    my ($self, $first, $last) = @_;
-    while (1 < $last - $first) { # semi-recursive implementation of quick sort
-        my $cut = $self->_unguarded_partition($first, $last);
-        if ($cut - $first < $last - $cut) {
+    my ($self, $r) = @_;
+    while (!$r->empty) { # semi-recursive implementation of quick sort
+        my ($left, $right) = $self->_unguarded_partition($r);
+        if ($left->length < $right->length) {
             # right hand side partition is longer:
             # recursively sort shorter left hand side partition
-            $self->_sort($first, $cut);
-            $first = $cut;
+            $self->_sort($left);
+            $r = $right; # sort right hand side partition by the loop
         } else {
             # left hand side partition is longer:
             # recursively sort shorter right hand side partition
-            $self->_sort($cut, $last);
-            $last = $cut;
+            $self->_sort($right);
+            $r = $left; # sort left hand side partition by the loop
         }
     }
 }
 
 sub _unguarded_partition {
-    my ($self, $first, $last) = @_;
-    my $mid = $first + (($last - $first)>>1);
-    my $pivot = $self->{values}->[$self->_median($first, $mid, $last-1)];
+    my ($self, $r) = @_;
+    my $range = $r->clone;
+    my $mid = $r->begin + (($r->length+1)>>1);
+    my $pivot = $self->{values}->[$self->_median($r->begin, $mid, $r->end-1)];
     while (1) {
-        ++$first while ($self->{pred}->($self->{values}->[$first], $pivot));
-        --$last;
-        --$last while ($self->{pred}->($pivot, $self->{values}->[$last]));
-        return $first unless $first < $last;
+        $r->pop_front while ($self->{pred}->($r->front, $pivot));
+        $r->pop_back;
+        $r->pop_back while ($self->{pred}->($pivot, $r->back));
+        return $range->split($r->begin) unless $r->valid;
 
-        ($self->{values}->[$first], $self->{values}->[$last])
-            = ($self->{values}->[$last], $self->{values}->[$first]);
-        ++$first;
+        ($r->front, $r->back) = ($r->back, $r->front);
+        $r->pop_front;
     }
 }
 
