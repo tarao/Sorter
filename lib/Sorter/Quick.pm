@@ -36,7 +36,7 @@ sub _unguarded_partition {
         $r->pop_front while $self->{pred}->($r->front, $pivot);
         $r->pop_back;
         $r->pop_back while $self->{pred}->($pivot, $r->back);
-        return $range->split($r->begin) unless $r->valid;
+        return $range->split($r->begin) if $r->empty;
 
         ($r->front, $r->back) = ($r->back, $r->front);
         $r->pop_front;
