@@ -21,7 +21,7 @@ sub empty {
 
 sub length {
     my $self = shift;
-    return $self->{e} - $self->{b} - 1;
+    return $self->{e} - $self->{b};
 }
 
 sub begin {
@@ -50,9 +50,25 @@ sub pop_back {
     shift->{e}--;
 }
 
+sub mid {
+    my ($self, $mid) = @_;
+    $mid = $self->begin + ($self->length >> 1) unless defined($mid);
+    return $mid;
+}
+
+sub left {
+    my ($self, $mid) = @_;
+    return $self->clone(undef, $mid);
+}
+
+sub right {
+    my ($self, $mid) = @_;
+    return $self->clone($mid);
+}
+
 sub split {
     my ($self, $mid) = @_;
-    return ($self->clone(undef, $mid), $self->clone($mid));
+    return ($self->left($mid), $self->right($mid));
 }
 
 sub clone {

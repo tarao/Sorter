@@ -11,7 +11,7 @@ sub sort {
 
 sub _sort {
     my ($self, $r) = @_;
-    while (!$r->empty) { # semi-recursive implementation of quick sort
+    while (1 < $r->length) { # semi-recursive implementation of quick sort
         my ($left, $right) = $self->_unguarded_partition($r);
         if ($left->length < $right->length) {
             # right hand side partition is longer:
@@ -30,12 +30,12 @@ sub _sort {
 sub _unguarded_partition {
     my ($self, $r) = @_;
     my $range = $r->clone;
-    my $mid = $r->begin + (($r->length+1)>>1);
+    my $mid = $r->mid;
     my $pivot = $self->{values}->[$self->_median($r->begin, $mid, $r->end-1)];
     while (1) {
-        $r->pop_front while ($self->{pred}->($r->front, $pivot));
+        $r->pop_front while $self->{pred}->($r->front, $pivot);
         $r->pop_back;
-        $r->pop_back while ($self->{pred}->($pivot, $r->back));
+        $r->pop_back while $self->{pred}->($pivot, $r->back);
         return $range->split($r->begin) unless $r->valid;
 
         ($r->front, $r->back) = ($r->back, $r->front);
