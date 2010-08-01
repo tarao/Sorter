@@ -4,19 +4,18 @@ use warnings;
 
 sub new {
     my ($class, $values, $b, $e) = @_;
-    $b ||= 0;
-    $e ||= 0 + @$values;
+    $b = 0 unless defined($b);
+    $e = 0 + @$values unless defined($e);
     return bless { b => $b, e => $e, values => $values }, $class;
 }
 
 sub valid {
     my $self = shift;
-    return $self->{b} < $self->{e};
+    return $self->{b} <= $self->{e};
 }
 
 sub empty {
-    my $self = shift;
-    return $self->length <= 0;
+    return shift->length <= 0;
 }
 
 sub length {
@@ -24,26 +23,26 @@ sub length {
     return $self->{e} - $self->{b};
 }
 
-sub begin {
-    return shift->{b};
+sub begin : lvalue {
+    shift->{b};
 }
 
 sub front : lvalue {
-    my $self = shift;
-    $self->{values}->[$self->{b}];
+    my ($self, $i) = @_;
+    $self->{values}->[$self->{b} + ($i || 0)];
 }
 
 sub pop_front {
     shift->{b}++;
 }
 
-sub end {
-    return shift->{e};
+sub end : lvalue {
+    shift->{e};
 }
 
 sub back : lvalue {
-    my $self = shift;
-    $self->{values}->[$self->{e}];
+    my ($self, $i) = @_;
+    $self->{values}->[$self->{e} - ($i || 0)];
 }
 
 sub pop_back {
@@ -58,12 +57,12 @@ sub mid {
 
 sub left {
     my ($self, $mid) = @_;
-    return $self->clone(undef, $mid);
+    return $self->clone($self->{b}, $self->mid($mid));
 }
 
 sub right {
     my ($self, $mid) = @_;
-    return $self->clone($mid);
+    return $self->clone($self->mid($mid));
 }
 
 sub split {
