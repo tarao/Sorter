@@ -20,8 +20,7 @@ sub _iterator {
 
 sub _make_heap {
     my ($self, $r) = @_; # r: [first, last)
-    my $hole = $r->left;
-    while (!$hole->empty) {
+    for (my $hole = $r->left; !$hole->empty;) {
         $hole->pop_back;
         my $val = $hole->back;
         $self->_adjust_heap($r->left($hole->end), $r->end, $val);
@@ -29,10 +28,10 @@ sub _make_heap {
 }
 
 sub _adjust_heap {
-    my ($self, $r, $bottom, $val) = @_; # r: first, hole
+    my ($self, $r, $bottom, $val, $i) = @_; # r: first, hole
     my $top = $r->end;
-    my $i = $self->_iterator($r)->smaller;
-    for (; $i->index < $bottom; $i = $i->smaller) {
+    for ($i = $self->_iterator($r)->smaller;
+         $i->index < $bottom; $i = $i->smaller) {
         my $g = $i->greater_sibling;
         $i = $g if $self->{pred}->($i->value, $g->value);
         ($r->back, $r->end) = ($i->value, $i->index);
@@ -46,8 +45,7 @@ sub _adjust_heap {
 sub _push_heap {
     my ($self, $r, $top, $val, $i) = @_; # r: first, hole
     for (($i, $r) = ($self->_iterator($r)->parent, $r->right($top));
-         !$r->empty && $self->{pred}->($i->value, $val);
-         $i = $i->parent) {
+         !$r->empty && $self->{pred}->($i->value, $val); $i = $i->parent) {
         ($r->back, $r->end) = ($i->value, $i->index);
     }
     $r->back = $val;
