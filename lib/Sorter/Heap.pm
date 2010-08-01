@@ -14,55 +14,51 @@ sub sort {
 }
 
 sub _iterator {
-    my ($self, $begin, $i) = @_;
-    return Sorter::Heap::Iterator->new($self->{values}, $begin, $i);
+    my ($self, $r) = @_;
+    return Sorter::Heap::Iterator->new($self->{values}, $r->begin, $r->length);
 }
 
 sub _make_heap {
-    my ($self, $r) = @_;
+    my ($self, $r) = @_; # r: [first, last)
     my $hole = $r->left;
     while (!$hole->empty) {
         $hole->pop_back;
         my $val = $hole->back;
-        $self->_adjust_heap($r->left($hole->end), $r->clone, $val);
+        $self->_adjust_heap($r->left($hole->end), $r->end, $val);
     }
 }
 
 sub _adjust_heap {
-    my ($self, $r, $limit, $val) = @_;
+    my ($self, $r, $bottom, $val) = @_; # r: first, hole
     my $top = $r->end;
-    my $i = $self->_iterator($r->begin, $r->length)->smaller;
-    for (; $i->index < $limit->end; $i = $i->smaller) {
+    my $i = $self->_iterator($r)->smaller;
+    for (; $i->index < $bottom; $i = $i->smaller) {
         my $g = $i->greater_sibling;
         $i = $g if $self->{pred}->($i->value, $g->value);
-
-        $r->back = $i->value;
-        $r->end = $i->index;
+        ($r->back, $r->end) = ($i->value, $i->index);
     }
-    if ($i->index == $limit->end) {
-        $r->back = $limit->back(1);
-        $r->end = $limit->end-1;
+    if ($i->index == $bottom) {
+        ($r->back, $r->end) = ($r->left($bottom)->back(1), $bottom-1);
     }
     $self->_push_heap($r, $top, $val);
 }
 
 sub _push_heap {
-    my ($self, $r, $top, $val) = @_;
-    for (my $i = $self->_iterator($r->begin, $r->length)->parent;
-         $top < $r->end && $self->{pred}->($i->value, $val);
+    my ($self, $r, $top, $val, $i) = @_; # r: first, hole
+    for (($i, $r) = ($self->_iterator($r)->parent, $r->right($top));
+         !$r->empty && $self->{pred}->($i->value, $val);
          $i = $i->parent) {
-        $r->back = $i->value;
-        $r->end = $i->index;
+        ($r->back, $r->end) = ($i->value, $i->index);
     }
     $r->back = $val;
 }
 
 sub _pop_heap {
-    my ($self, $r) = @_;
+    my ($self, $r) = @_; # r: [first, last)
     if (1 < $r->length) {
         my $val = $r->back(1);
         $r->back(1) = $r->front;
-        $self->_adjust_heap($r->left($r->begin), $r->left($r->end-1), $val);
+        $self->_adjust_heap($r->left($r->begin), $r->end-1, $val);
     }
 }
 
@@ -71,6 +67,11 @@ package Sorter::Heap::Iterator;
 sub new {
     my ($class, $values, $begin, $i) = @_;
     return bless { v => $values, b => $begin, i => $i }, $class;
+}
+
+sub clone {
+    my ($self, $i) = @_;
+    return __PACKAGE__->new($self->{v}, $self->{b}, $i);
 }
 
 sub _smaller {
@@ -87,27 +88,27 @@ sub _parent {
 
 sub smaller {
     my $self = shift;
-    return __PACKAGE__->new($self->{v}, $self->{b}, $self->_smaller);
+    return $self->clone($self->_smaller);
 }
 
 sub greater {
     my $self = shift;
-    return __PACKAGE__->new($self->{v}, $self->{b}, $self->_greater-1);
+    return $self->clone($self->_greater-1);
 }
 
 sub smaller_sibling {
     my $self = shift;
-    return __PACKAGE__->new($self->{v}, $self->{b}, $self->{i}+1);
+    return $self->clone($self->{i}+1);
 }
 
 sub greater_sibling {
     my $self = shift;
-    return __PACKAGE__->new($self->{v}, $self->{b}, $self->{i}-1);
+    return $self->clone($self->{i}-1);
 }
 
 sub parent {
     my $self = shift;
-    return __PACKAGE__->new($self->{v}, $self->{b}, $self->_parent);
+    return $self->clone($self->_parent);
 }
 
 sub index {
